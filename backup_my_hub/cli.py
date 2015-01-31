@@ -18,10 +18,16 @@ except ImportError:
 
 
 class Messenger(object):
+    def __init__(self, verbose):
+        self._verbose = verbose
+
     def info(self, *args, **kwargs):
         print(*args, **kwargs)
 
     def command(self, argv, **kwargs):
+        if not self._verbose:
+            return
+
         cwd = kwargs.pop('cwd', None)
         flat_argv = ' '.join(argv)
         if cwd:
@@ -66,7 +72,7 @@ def _create_parent_directories(path, messenger):
         messenger.command(['mkdir', path_to_create])
 
 
-def _process_repository(repo, target_directory_base, messenger, index, count):
+def _process_repository(repo, target_directory_base, messenger, verbose, index, count):
     messenger.info('[%*d/%s] Processing repository "%s"...' % \
             (len(str(count)), index + 1, count, repo.full_name))
     target_directory = os.path.join(target_directory_base, repo.full_name)
@@ -82,7 +88,15 @@ def _process_repository(repo, target_directory_base, messenger, index, count):
         cwd = None
 
     messenger.command(command, cwd=cwd)
-    subprocess.check_call(command, cwd=cwd)
+    if verbose:
+        git_stdout = None
+    else:
+        git_stdout = open('/dev/null', 'w')
+
+    subprocess.check_call(command, cwd=cwd, stdout=git_stdout)
+
+    if not verbose:
+        git_stdout.close()
 
 
 def main():
@@ -91,14 +105,16 @@ def main():
             help='GitHub user name')
     parser.add_argument('target_directory_base', metavar='DIRECTORY',
             help='Local directory to sync repositories to')
+    parser.add_argument('--verbose', default=False, action='store_true',
+            help='Increase verbosity')
     options = parser.parse_args()
 
-    messenger = Messenger()
+    messenger = Messenger(options.verbose)
     repos = _get_repositories(options.github_user_name, messenger)
     len_repos = len(repos)
     for i, repo in enumerate(repos):
         _process_repository(repo, options.target_directory_base,
-                messenger, i, len_repos)
+                messenger, options.verbose, i, len_repos)
 
 
 if __name__ == '__main__':
