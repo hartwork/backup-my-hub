@@ -173,18 +173,23 @@ def main():
     options = parser.parse_args()
 
     messenger = Messenger(options.verbose)
+
     repos = _get_repositories(options.github_user_name, options.api_token, messenger)
     len_repos = len(repos)
-    for i, repo in enumerate(repos):
-        _process_repository(repo, options.target_directory_base,
-                messenger, options.verbose, i, len_repos)
 
     gists = _get_gists(options.github_user_name, options.api_token)
     len_gists = len(gists)
+
+    len_combined = len_repos + len_gists
+
+    for i, repo in enumerate(repos):
+        _process_repository(repo, options.target_directory_base,
+                messenger, options.verbose, i, len_combined)
+
     for i, gist in enumerate(gists):
         _process_gist(gist, options.target_directory_base,
                 options.github_user_name,
-                messenger, i, len_gists)
+                messenger, len_repos + i, len_combined)
 
 
 if __name__ == '__main__':
