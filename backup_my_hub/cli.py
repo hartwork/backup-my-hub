@@ -4,6 +4,9 @@
 from __future__ import print_function
 
 import argparse
+import errno
+import os
+import subprocess
 import sys
 
 try:
@@ -15,6 +18,18 @@ except ImportError:
 
 
 class Messenger(object):
+    def info(self, *args, **kwargs):
+        print(*args, **kwargs)
+
+    def command(self, argv, **kwargs):
+        cwd = kwargs.pop('cwd', None)
+        flat_argv = ' '.join(argv)
+        if cwd:
+            text = '# ( cd %s && %s )' % (cwd, flat_argv)
+        else:
+            text = '# %s' % flat_argv
+        print(text, **kwargs)
+
     def warn(self, *args, **kwargs):
         print('WARNING:', *args, file=sys.stderr, **kwargs)
 
@@ -40,16 +55,50 @@ def _get_repositories(user_name, messenger):
     return repos
 
 
+def _create_parent_directories(path, messenger):
+    path_to_create = os.path.dirname(path)
+    try:
+        os.makedirs(path_to_create)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+             raise
+    else:
+        messenger.command(['mkdir', path_to_create])
+
+
+def _process_repository(repo, target_directory_base, messenger, index, count):
+    messenger.info('[%s/%s] Processing repository "%s"...' % \
+            (index + 1, count, repo.full_name))
+    target_directory = os.path.join(target_directory_base, repo.full_name)
+    if os.path.exists(target_directory):
+        command = ['git', 'remote', 'update']
+        cwd = target_directory
+    else:
+        _create_parent_directories(target_directory, messenger)
+        command = ['git', 'clone',
+                '--mirror',
+                repo.clone_url,
+                target_directory]
+        cwd = None
+
+    messenger.command(command, cwd=cwd)
+    subprocess.check_call(command, cwd=cwd)
+
+
 def main():
     parser = argparse.ArgumentParser(prog='backup-my-hub')
     parser.add_argument('github_user_name', metavar='USER',
             help='GitHub user name')
-    parser.add_argument('target_directory', metavar='DIRECTORY',
+    parser.add_argument('target_directory_base', metavar='DIRECTORY',
             help='Local directory to sync repositories to')
     options = parser.parse_args()
 
     messenger = Messenger()
     repos = _get_repositories(options.github_user_name, messenger)
+    len_repos = len(repos)
+    for i, repo in enumerate(repos):
+        _process_repository(repo, options.target_directory_base,
+                messenger, i, len_repos)
 
 
 if __name__ == '__main__':
