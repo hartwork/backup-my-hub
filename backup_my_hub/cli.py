@@ -67,8 +67,8 @@ def _create_parent_directories(path, messenger):
 
 
 def _process_repository(repo, target_directory_base, messenger, index, count):
-    messenger.info('[%s/%s] Processing repository "%s"...' % \
-            (index + 1, count, repo.full_name))
+    messenger.info('[%*d/%s] Processing repository "%s"...' % \
+            (len(str(count)), index + 1, count, repo.full_name))
     target_directory = os.path.join(target_directory_base, repo.full_name)
     if os.path.exists(target_directory):
         command = ['git', 'remote', 'update']
