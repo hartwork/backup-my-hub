@@ -16,6 +16,13 @@ except ImportError:
             file=sys.stderr)
     sys.exit(1)
 
+try:
+    import requests
+except ImportError:
+    print('Requests (http://python-requests.org/) seems to be missing.',
+            file=sys.stderr)
+    sys.exit(1)
+
 
 class Messenger(object):
     def __init__(self, verbose):
@@ -61,6 +68,23 @@ def _get_repositories(user_name, messenger):
     return repos
 
 
+def _get_gists(user_name):
+    gh = github.Github()
+    user = gh.get_user(user_name)
+    paginated = user.get_gists()
+
+    gists = []
+    page = 0
+    while True:
+        gists_current_page = paginated.get_page(page)
+        if not gists_current_page:
+            break
+        gists += gists_current_page
+        page += 1
+
+    return gists
+
+
 def _create_parent_directories(path, messenger):
     path_to_create = os.path.dirname(path)
     try:
@@ -75,7 +99,7 @@ def _create_parent_directories(path, messenger):
 def _process_repository(repo, target_directory_base, messenger, verbose, index, count):
     messenger.info('[%*d/%s] Processing repository "%s"...' % \
             (len(str(count)), index + 1, count, repo.full_name))
-    target_directory = os.path.join(target_directory_base, repo.full_name)
+    target_directory = os.path.join(target_directory_base, 'repositories', repo.full_name)
     if os.path.exists(target_directory):
         command = ['git', 'remote', 'update']
         cwd = target_directory
@@ -99,12 +123,49 @@ def _process_repository(repo, target_directory_base, messenger, verbose, index, 
         git_stdout.close()
 
 
+def _sanitize_path_component(text):
+    text = text.replace('/', '-')
+    while text.startswith('.'):
+        text = text[1:]
+
+    if not text:
+        raise ValueError('Path compoment cannot be empty')
+
+    return text
+
+
+def _process_gist(gist, target_directory_base, github_user_name, messenger, index, count):
+    len_gist_files = len(gist.files)
+    if len_gist_files != 1:
+        messenger.warn('Gist "%s" contains %d files, expected a single one' % \
+            (gist.id, len_gist_files))
+
+    if not len_gist_files:
+        return
+
+    gist_file = sorted(gist.files.items())[0][1]  # First only
+    messenger.info('[%*d/%s] Processing gist "%s" (ID %s, %s)...' % \
+            (len(str(count)), index + 1, count,
+            gist_file.filename, gist.id, gist_file.language))
+
+    target_filename = os.path.join(target_directory_base, 'gists',
+            _sanitize_path_component(github_user_name),
+            _sanitize_path_component(gist.id),
+            _sanitize_path_component(gist_file.filename))
+    _create_parent_directories(target_filename, messenger)
+
+    f = open(target_filename, 'w')
+    r = requests.get(gist_file.raw_url)
+    f.write(r.text)
+    f.close()
+
+
 def main():
     parser = argparse.ArgumentParser(prog='backup-my-hub')
     parser.add_argument('github_user_name', metavar='USER',
             help='GitHub user name')
     parser.add_argument('target_directory_base', metavar='DIRECTORY',
-            help='Local directory to sync repositories to')
+            help='Local directory to sync repositories and gists to')
     parser.add_argument('--verbose', default=False, action='store_true',
             help='Increase verbosity')
     options = parser.parse_args()
@@ -115,6 +176,13 @@ def main():
     for i, repo in enumerate(repos):
         _process_repository(repo, options.target_directory_base,
                 messenger, options.verbose, i, len_repos)
+
+    gists = _get_gists(options.github_user_name)
+    len_gists = len(gists)
+    for i, gist in enumerate(gists):
+        _process_gist(gist, options.target_directory_base,
+                options.github_user_name,
+                messenger, i, len_gists)
 
 
 if __name__ == '__main__':
