@@ -47,8 +47,8 @@ class Messenger(object):
         print('WARNING:', *args, file=sys.stderr, **kwargs)
 
 
-def _get_repositories(user_name, messenger):
-    gh = github.Github()
+def _get_repositories(user_name, api_token, messenger):
+    gh = github.Github(login_or_token=api_token)
     paginated = gh.search_repositories('', user=user_name)
 
     repos = []
@@ -68,8 +68,8 @@ def _get_repositories(user_name, messenger):
     return repos
 
 
-def _get_gists(user_name):
-    gh = github.Github()
+def _get_gists(user_name, api_token):
+    gh = github.Github(login_or_token=api_token)
     user = gh.get_user(user_name)
     paginated = user.get_gists()
 
@@ -168,16 +168,18 @@ def main():
             help='Local directory to sync repositories and gists to')
     parser.add_argument('--verbose', default=False, action='store_true',
             help='Increase verbosity')
+    parser.add_argument('--api-token', metavar='TOKEN',
+            help='Authenticate to the API server (e.g. to push rate limits)')
     options = parser.parse_args()
 
     messenger = Messenger(options.verbose)
-    repos = _get_repositories(options.github_user_name, messenger)
+    repos = _get_repositories(options.github_user_name, options.api_token, messenger)
     len_repos = len(repos)
     for i, repo in enumerate(repos):
         _process_repository(repo, options.target_directory_base,
                 messenger, options.verbose, i, len_repos)
 
-    gists = _get_gists(options.github_user_name)
+    gists = _get_gists(options.github_user_name, options.api_token)
     len_gists = len(gists)
     for i, gist in enumerate(gists):
         _process_gist(gist, options.target_directory_base,
