@@ -214,7 +214,7 @@ def main():
 
     len_combined = len_repos + len_gists
 
-    for i, repo in enumerate(repos):
+    for i, repo in enumerate(sorted(repos, key=lambda r: r.full_name.lower())):
         _process_repository(repo, options.target_directory_base,
                 messenger, options.verbose, i, len_combined)
 
