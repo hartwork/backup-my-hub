@@ -23,6 +23,11 @@ except ImportError:
             file=sys.stderr)
     sys.exit(1)
 
+from config import Config
+
+
+_DEFAULT_CONFIG_PATH = '~/.config/backup-my-hub/main.cfg'
+
 
 class Messenger(object):
     def __init__(self, verbose):
@@ -45,6 +50,11 @@ class Messenger(object):
 
     def warn(self, *args, **kwargs):
         print('WARNING:', *args, file=sys.stderr, **kwargs)
+
+
+def _get_repository(global_name, api_token, messenger):
+    gh = github.Github(login_or_token=api_token)
+    return gh.get_repo(global_name)
 
 
 def _get_repositories(user_name, api_token, messenger):
@@ -162,8 +172,11 @@ def _process_gist(gist, target_directory_base, github_user_name, messenger, inde
 
 def main():
     parser = argparse.ArgumentParser(prog='backup-my-hub')
-    parser.add_argument('github_user_name', metavar='USER',
-            help='GitHub user name')
+    parser.add_argument('--config', dest='config_file', metavar='FILE',
+            help='Configuration file to use (default: %s, if existing)' % _DEFAULT_CONFIG_PATH)
+    parser.add_argument('--user', dest='github_user_name', metavar='USER',
+            help='GitHub user name; if given, configured users and repositories are ignored')
+
     parser.add_argument('target_directory_base', metavar='DIRECTORY',
             help='Local directory to sync repositories and gists to')
     parser.add_argument('--verbose', default=False, action='store_true',
@@ -174,10 +187,29 @@ def main():
 
     messenger = Messenger(options.verbose)
 
-    repos = _get_repositories(options.github_user_name, options.api_token, messenger)
-    len_repos = len(repos)
+    if options.github_user_name:
+        whole_users = [options.github_user_name]
+        additional_repositories = []
+    else:
+        config = Config()
+        if options.config_file:
+            config.load(options.config_file, messenger)
+        else:
+            config.load(os.path.expanduser(_DEFAULT_CONFIG_PATH), messenger)
 
-    gists = _get_gists(options.github_user_name, options.api_token)
+        whole_users = sorted(config.get_whole_users())
+        additional_repositories = sorted(config.get_additional_repositories())
+
+    repos = []
+    gists = []
+    for user_name in whole_users:
+        repos.extend(_get_repositories(user_name, options.api_token, messenger))
+        gists.extend(_get_gists(user_name, options.api_token))
+
+    for global_name in additional_repositories:
+        repos.append(_get_repository(global_name, options.api_token, messenger))
+
+    len_repos = len(repos)
     len_gists = len(gists)
 
     len_combined = len_repos + len_gists
@@ -188,7 +220,7 @@ def main():
 
     for i, gist in enumerate(gists):
         _process_gist(gist, options.target_directory_base,
-                options.github_user_name,
+                gist.owner.login,
                 messenger, len_repos + i, len_combined)
 
 
