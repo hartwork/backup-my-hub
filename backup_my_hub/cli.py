@@ -231,7 +231,3 @@ def main():
     for i, gist in enumerate(gists):
         _process_gist(gist, options.target_directory_base, gist.owner.login,
                       messenger, len_repos + i, len_combined)
-
-
-if __name__ == '__main__':
-    main()
