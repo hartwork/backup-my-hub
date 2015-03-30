@@ -12,15 +12,15 @@ import sys
 try:
     import github
 except ImportError:
-    print('PyGithub (https://github.com/jacquev6/PyGithub) seems to be missing.',
-            file=sys.stderr)
+    print('PyGithub (https://github.com/jacquev6/PyGithub) seems to be '
+          'missing.', file=sys.stderr)
     sys.exit(1)
 
 try:
     import requests
 except ImportError:
     print('Requests (http://python-requests.org/) seems to be missing.',
-            file=sys.stderr)
+          file=sys.stderr)
     sys.exit(1)
 
 from config import Config
@@ -72,8 +72,8 @@ def _get_repositories(user_name, api_token, messenger):
 
     len_repos = len(repos)
     if len_repos != paginated.totalCount:
-        messenger.warn('%d repositories announced, but %d repositories retrieved' % \
-                 (paginated.totalCount, len_repos))
+        messenger.warn('%d repositories announced, but %d repositories '
+                       'retrieved' % (paginated.totalCount, len_repos))
 
     return repos
 
@@ -101,24 +101,26 @@ def _create_parent_directories(path, messenger):
         os.makedirs(path_to_create)
     except OSError as e:
         if e.errno != errno.EEXIST:
-             raise
+            raise
     else:
         messenger.command(['mkdir', path_to_create])
 
 
-def _process_repository(repo, target_directory_base, messenger, verbose, index, count):
-    messenger.info('[%*d/%s] Processing repository "%s"...' % \
-            (len(str(count)), index + 1, count, repo.full_name))
-    target_directory = os.path.join(target_directory_base, 'repositories', repo.full_name)
+def _process_repository(repo, target_directory_base, messenger, verbose, index,
+                        count):
+    messenger.info('[%*d/%s] Processing repository "%s"...' %
+                   (len(str(count)), index + 1, count, repo.full_name))
+    target_directory = os.path.join(target_directory_base, 'repositories',
+                                    repo.full_name)
     if os.path.exists(target_directory):
         command = ['git', 'remote', 'update']
         cwd = target_directory
     else:
         _create_parent_directories(target_directory, messenger)
         command = ['git', 'clone',
-                '--mirror',
-                repo.clone_url,
-                target_directory]
+                   '--mirror',
+                   repo.clone_url,
+                   target_directory]
         cwd = None
 
     messenger.command(command, cwd=cwd)
@@ -144,24 +146,26 @@ def _sanitize_path_component(text):
     return text
 
 
-def _process_gist(gist, target_directory_base, github_user_name, messenger, index, count):
+def _process_gist(gist, target_directory_base, github_user_name, messenger,
+                  index, count):
     len_gist_files = len(gist.files)
     if len_gist_files != 1:
-        messenger.warn('Gist "%s" contains %d files, expected a single one' % \
-            (gist.id, len_gist_files))
+        messenger.warn('Gist "%s" contains %d files, expected a single one' %
+                       (gist.id, len_gist_files))
 
     if not len_gist_files:
         return
 
     gist_file = sorted(gist.files.items())[0][1]  # First only
-    messenger.info('[%*d/%s] Processing gist "%s" (ID %s, %s)...' % \
-            (len(str(count)), index + 1, count,
-            gist_file.filename, gist.id, gist_file.language))
+    messenger.info('[%*d/%s] Processing gist "%s" (ID %s, %s)...' %
+                   (len(str(count)), index + 1, count,
+                    gist_file.filename, gist.id, gist_file.language))
 
     target_filename = os.path.join(target_directory_base, 'gists',
-            _sanitize_path_component(github_user_name),
-            _sanitize_path_component(gist.id),
-            _sanitize_path_component(gist_file.filename))
+                                   _sanitize_path_component(github_user_name),
+                                   _sanitize_path_component(gist.id),
+                                   _sanitize_path_component(gist_file.filename)
+                                   )
     _create_parent_directories(target_filename, messenger)
 
     f = open(target_filename, 'w')
@@ -173,16 +177,20 @@ def _process_gist(gist, target_directory_base, github_user_name, messenger, inde
 def main():
     parser = argparse.ArgumentParser(prog='backup-my-hub')
     parser.add_argument('--config', dest='config_file', metavar='FILE',
-            help='Configuration file to use (default: %s, if existing)' % _DEFAULT_CONFIG_PATH)
+                        help='Configuration file to use (default: %s, if '
+                             'existing)' % _DEFAULT_CONFIG_PATH)
     parser.add_argument('--user', dest='github_user_name', metavar='USER',
-            help='GitHub user name; if given, configured users and repositories are ignored')
+                        help='GitHub user name; if given, configured users '
+                             'and repositories are ignored')
 
     parser.add_argument('target_directory_base', metavar='DIRECTORY',
-            help='Local directory to sync repositories and gists to')
+                        help='Local directory to sync repositories and gists '
+                             'to')
     parser.add_argument('--verbose', default=False, action='store_true',
-            help='Increase verbosity')
+                        help='Increase verbosity')
     parser.add_argument('--api-token', metavar='TOKEN',
-            help='Authenticate to the API server (e.g. to push rate limits)')
+                        help='Authenticate to the API server (e.g. to push '
+                             'rate limits)')
     options = parser.parse_args()
 
     messenger = Messenger(options.verbose)
@@ -203,11 +211,13 @@ def main():
     repos = []
     gists = []
     for user_name in whole_users:
-        repos.extend(_get_repositories(user_name, options.api_token, messenger))
+        repos.extend(_get_repositories(user_name, options.api_token,
+                                       messenger))
         gists.extend(_get_gists(user_name, options.api_token))
 
     for global_name in additional_repositories:
-        repos.append(_get_repository(global_name, options.api_token, messenger))
+        repos.append(_get_repository(global_name, options.api_token,
+                                     messenger))
 
     len_repos = len(repos)
     len_gists = len(gists)
@@ -215,14 +225,9 @@ def main():
     len_combined = len_repos + len_gists
 
     for i, repo in enumerate(sorted(repos, key=lambda r: r.full_name.lower())):
-        _process_repository(repo, options.target_directory_base,
-                messenger, options.verbose, i, len_combined)
+        _process_repository(repo, options.target_directory_base, messenger,
+                            options.verbose, i, len_combined)
 
     for i, gist in enumerate(gists):
-        _process_gist(gist, options.target_directory_base,
-                gist.owner.login,
-                messenger, len_repos + i, len_combined)
-
-
-if __name__ == '__main__':
-    main()
+        _process_gist(gist, options.target_directory_base, gist.owner.login,
+                      messenger, len_repos + i, len_combined)
