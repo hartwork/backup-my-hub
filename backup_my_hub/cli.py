@@ -16,17 +16,23 @@ except ImportError:
           'missing.', file=sys.stderr)
     sys.exit(1)
 
-try:
-    import requests
-except ImportError:
-    print('Requests (http://python-requests.org/) seems to be missing.',
-          file=sys.stderr)
-    sys.exit(1)
-
 from config import Config
+
+requests = None  # Module imported later
 
 
 _DEFAULT_CONFIG_PATH = '~/.config/backup-my-hub/main.cfg'
+
+
+def _import_requests_module():
+    global requests
+    try:
+        import requests as _requests_module
+    except ImportError:
+        print('Requests (http://python-requests.org/) seems to be missing.',
+              file=sys.stderr)
+        sys.exit(1)
+    requests = _requests_module
 
 
 class Messenger(object):
@@ -192,6 +198,9 @@ def main():
                         help='Authenticate to the API server (e.g. to push '
                              'rate limits)')
     options = parser.parse_args()
+
+    # Late import to reduce noticable --help latency (issue #4)
+    _import_requests_module()
 
     messenger = Messenger(options.verbose)
 
