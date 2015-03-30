@@ -43,8 +43,9 @@ class Config(object):
         for global_name in list(self._additional_repositories):
             user, local_name = global_name.split('/')
             if user in self._whole_users:
-                messenger.info('Request for repository "%s" covered by request for user "%s", already.' \
-                        % (global_name, user))
+                messenger.info('Request for repository "%s" covered by '
+                               'request for user "%s", already.' %
+                               (global_name, user))
                 self._additional_repositories.remove(global_name)
 
     def get_whole_users(self):
