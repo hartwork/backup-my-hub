@@ -132,7 +132,7 @@ def _process_repository(repo, target_directory_base, messenger, verbose, index,
     target_directory = os.path.join(target_directory_base, 'repositories',
                                     repo.full_name)
     if os.path.exists(target_directory):
-        command = ['git', 'remote', 'update']
+        command = ['git', 'remote', 'update', '--prune']
         cwd = target_directory
     else:
         _create_parent_directories(target_directory, messenger)
