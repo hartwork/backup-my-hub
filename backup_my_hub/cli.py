@@ -17,6 +17,7 @@ except ImportError:
     sys.exit(1)
 
 from .config import Config
+from .version import VERSION_STR
 
 requests = None  # Module imported later
 
@@ -201,6 +202,7 @@ def main():
     parser.add_argument('--api-token', metavar='TOKEN',
                         help='Authenticate to the API server (e.g. to push '
                              'rate limits)')
+    parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION_STR)
     options = parser.parse_args()
 
     # Late import to reduce noticable --help latency (issue #4)

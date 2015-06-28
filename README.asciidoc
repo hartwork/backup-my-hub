@@ -37,7 +37,7 @@ Usage (`--help` output)
 -------------------------------------------------------------------
 # backup-my-hub --help
 usage: backup-my-hub [-h] [--config FILE] [--user USER] [--verbose]
-                     [--api-token TOKEN]
+                     [--api-token TOKEN] [--version]
                      DIRECTORY
 
 positional arguments:
@@ -51,4 +51,5 @@ optional arguments:
                      repositories are ignored
   --verbose          Increase verbosity
   --api-token TOKEN  Authenticate to the API server (e.g. to push rate limits)
+  --version          show program's version number and exit
 -------------------------------------------------------------------
