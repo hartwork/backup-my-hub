@@ -16,7 +16,7 @@ except ImportError:
           'missing.', file=sys.stderr)
     sys.exit(1)
 
-from config import Config
+from .config import Config
 
 requests = None  # Module imported later
 
