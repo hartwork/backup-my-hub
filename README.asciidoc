@@ -1,0 +1,54 @@
+About
+-----
+_backup-my-hub_ is my take at a simple command line tool to backup
+
+ * both Git repositories and https://gist.github.com/[gists]
+
+ * for a given list of GitHub users, organizations or repositories
+
+to a given local directory.
+
+I started _backup-my-hub_ because I moved most of my Git repositories
+to GitHub and wanted to be sure that if my account or some repository
+of mine ever gets deleted or blocked, I would have a backup.
+
+
+Configuration
+-------------
+Configuration is rather simple, though a bit unusual.
+I picked this format for extensibility:
+
+-------------------------------------------------------------------
+# cat ~/.config/backup-my-hub/main.cfg
+[user hartwork]
+[user gentoo-ev]
+[repository gentoo/blender-gentoo-logo]
+[repository gentoo/blender-gentoo-logo-overlay]
+[repository gentoo/eassign]
+[repository gentoo/elogv]
+[repository gentoo/fetchcommandwrapper]
+[repository gentoo/grub2-themes-overlay]
+[repository gentoo/porticron]
+-------------------------------------------------------------------
+
+
+Usage (`--help` output)
+-----------------------
+-------------------------------------------------------------------
+# backup-my-hub --help
+usage: backup-my-hub [-h] [--config FILE] [--user USER] [--verbose]
+                     [--api-token TOKEN]
+                     DIRECTORY
+
+positional arguments:
+  DIRECTORY          Local directory to sync repositories and gists to
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --config FILE      Configuration file to use (default: ~/.config/backup-my-
+                     hub/main.cfg, if existing)
+  --user USER        GitHub user name; if given, configured users and
+                     repositories are ignored
+  --verbose          Increase verbosity
+  --api-token TOKEN  Authenticate to the API server (e.g. to push rate limits)
+-------------------------------------------------------------------
