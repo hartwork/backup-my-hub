@@ -112,6 +112,19 @@ def _create_parent_directories(path, messenger):
         messenger.command(['mkdir', path_to_create])
 
 
+def _run_command(command, cwd, messenger, verbose):
+    messenger.command(command, cwd=cwd)
+    if verbose:
+        stdout = None
+    else:
+        stdout = open('/dev/null', 'w')
+
+    subprocess.check_call(command, cwd=cwd, stdout=stdout)
+
+    if not verbose:
+        stdout.close()
+
+
 def _process_repository(repo, target_directory_base, messenger, verbose, index,
                         count):
     messenger.info('[%*d/%s] Processing repository "%s"...' %
@@ -129,16 +142,7 @@ def _process_repository(repo, target_directory_base, messenger, verbose, index,
                    target_directory]
         cwd = None
 
-    messenger.command(command, cwd=cwd)
-    if verbose:
-        git_stdout = None
-    else:
-        git_stdout = open('/dev/null', 'w')
-
-    subprocess.check_call(command, cwd=cwd, stdout=git_stdout)
-
-    if not verbose:
-        git_stdout.close()
+    _run_command(command, cwd, messenger, verbose)
 
 
 def _sanitize_path_component(text):
