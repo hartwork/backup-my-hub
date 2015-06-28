@@ -53,3 +53,18 @@ optional arguments:
   --api-token TOKEN  Authenticate to the API server (e.g. to push rate limits)
   --version          show program's version number and exit
 -------------------------------------------------------------------
+
+
+Alternatives
+------------
+If you are looking for software doing _similar_ things but in _different_ ways, there are:
+
+ * https://github.com/kennethreitz/ghsync[ghsync]
+
+ * https://github.com/swdyh/gisty[gisty]
+
+ * https://github.com/knu/github-sync[github-sync] (of knu)
+
+ * https://github.com/adw0rd/github-sync[github-sync] (of adw0rd), fork of https://github.com/kennethreitz/ghsync[ghsync]
+
+ * https://github.com/jmhobbs/github-watcher[github-watcher]
