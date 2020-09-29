@@ -26,6 +26,9 @@ if __name__ == '__main__':
                 'backup-my-hub',
             ),
             python_requires='>=3.6',
+            install_requires=[
+                'PyGithub',
+            ],
             classifiers=[
                 'Development Status :: 3 - Alpha',
                 'Environment :: Console',
