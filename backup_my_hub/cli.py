@@ -10,7 +10,7 @@ import sys
 try:
     import github
 except ImportError:
-    print('PyGithub (https://github.com/jacquev6/PyGithub) seems to be '
+    print('PyGithub (https://github.com/PyGithub/PyGithub) seems to be '
           'missing.', file=sys.stderr)
     sys.exit(1)
 
